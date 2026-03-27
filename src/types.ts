@@ -21,10 +21,15 @@ export interface GameState {
   ball: Ball;
   rods: Rod[];
   score: [number, number]; // [host, guest]
-  status: 'playing' | 'goal' | 'countdown' | 'finished' | 'paused';
+  status: 'playing' | 'goal' | 'countdown' | 'finished' | 'paused' | 'powermove';
   goalPauseTimer: number;
   countdownTimer: number;
   lastScorer: 'host' | 'guest' | null;
+  powerMoveBannerTimer: number;
+  powerMoveActiveTimer: number;
+  powerMovesLeft: [number, number]; // [host, guest] remaining
+  powerMovesUsed: [number, number];
+  powerMoveGoals: [number, number]; // goals scored during power move
 }
 
 export interface PlayerInput {
@@ -32,6 +37,7 @@ export interface PlayerInput {
   defDown: boolean;
   atkUp: boolean;
   atkDown: boolean;
+  powerMove: boolean;
 }
 
 export type Message =

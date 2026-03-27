@@ -210,17 +210,25 @@ export function render(
   ctx.arc(state.ball.x + 2, state.ball.y + 2, BALL_RADIUS, 0, Math.PI * 2);
   ctx.fill();
 
-  // Ball
-  ctx.fillStyle = BALL_COLOR;
+  // Ball (glowing during power move)
+  const pmActive = state.powerMoveActiveTimer > 0;
+  if (pmActive) {
+    ctx.shadowColor = '#ff4400';
+    ctx.shadowBlur = 20;
+  }
+  ctx.fillStyle = pmActive ? '#ff6622' : BALL_COLOR;
   ctx.beginPath();
-  ctx.arc(state.ball.x, state.ball.y, BALL_RADIUS, 0, Math.PI * 2);
+  ctx.arc(state.ball.x, state.ball.y, pmActive ? BALL_RADIUS * 1.3 : BALL_RADIUS, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowBlur = 0;
 
   // Ball highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.beginPath();
-  ctx.arc(state.ball.x - 2, state.ball.y - 2, BALL_RADIUS * 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  if (!pmActive) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.arc(state.ball.x - 2, state.ball.y - 2, BALL_RADIUS * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Score display
   const scoreW = 200;
@@ -234,19 +242,34 @@ export function render(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Team labels
+  // Team labels (Blue defends left, Red defends right)
   ctx.font = 'bold 11px monospace';
-  ctx.fillStyle = HOST_ROD_COLOR;
-  ctx.fillText('RED', scoreX - 70, scoreY);
   ctx.fillStyle = GUEST_ROD_COLOR;
-  ctx.fillText('BLUE', scoreX + 70, scoreY);
+  ctx.fillText('BLUE', scoreX - 70, scoreY);
+  ctx.fillStyle = HOST_ROD_COLOR;
+  ctx.fillText('RED', scoreX + 70, scoreY);
 
-  // Score numbers
+  // Score numbers (blue left, red right)
   ctx.font = 'bold 18px monospace';
   ctx.fillStyle = '#fff';
-  ctx.fillText(`${state.score[0]}`, scoreX - 30, scoreY);
+  ctx.fillText(`${state.score[1]}`, scoreX - 30, scoreY);
   ctx.fillText('-', scoreX, scoreY);
-  ctx.fillText(`${state.score[1]}`, scoreX + 30, scoreY);
+  ctx.fillText(`${state.score[0]}`, scoreX + 30, scoreY);
+
+  // Power moves remaining (blue left, red right)
+  const pmY = TABLE_HEIGHT - 10;
+  ctx.font = '10px monospace';
+  ctx.textBaseline = 'middle';
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = GUEST_ROD_COLOR;
+  const bluePm = state.powerMovesLeft[1];
+  ctx.fillText(`⚡${'●'.repeat(bluePm)}${'○'.repeat(2 - bluePm)}`, BORDER_WIDTH + 4, pmY);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = HOST_ROD_COLOR;
+  const redPm = state.powerMovesLeft[0];
+  ctx.fillText(`${'●'.repeat(redPm)}${'○'.repeat(2 - redPm)}⚡`, TABLE_WIDTH - BORDER_WIDTH - 4, pmY);
 
   // Pause hint (always visible)
   ctx.font = '10px monospace';
@@ -282,6 +305,44 @@ export function render(
     ctx.textBaseline = 'middle';
     const num = Math.ceil(state.countdownTimer);
     ctx.fillText(num > 0 ? String(num) : 'GO!', TABLE_WIDTH / 2, TABLE_HEIGHT / 2);
+  }
+
+  // Power move banner
+  if (state.status === 'powermove') {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(BORDER_WIDTH, BORDER_WIDTH, TABLE_WIDTH - BORDER_WIDTH * 2, TABLE_HEIGHT - BORDER_WIDTH * 2);
+
+    // Diagonal red/yellow stripes behind the text
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(BORDER_WIDTH, TABLE_HEIGHT / 2 - 50, TABLE_WIDTH - BORDER_WIDTH * 2, 100);
+    ctx.clip();
+    ctx.fillStyle = '#cc2200';
+    ctx.fillRect(BORDER_WIDTH, TABLE_HEIGHT / 2 - 50, TABLE_WIDTH - BORDER_WIDTH * 2, 100);
+    const stripeW = 30;
+    ctx.fillStyle = 'rgba(255,200,0,0.3)';
+    for (let sx = -100; sx < TABLE_WIDTH + 100; sx += stripeW * 2) {
+      ctx.beginPath();
+      ctx.moveTo(sx, TABLE_HEIGHT / 2 - 50);
+      ctx.lineTo(sx + stripeW, TABLE_HEIGHT / 2 - 50);
+      ctx.lineTo(sx + stripeW - 60, TABLE_HEIGHT / 2 + 50);
+      ctx.lineTo(sx - 60, TABLE_HEIGHT / 2 + 50);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 8;
+
+    ctx.font = 'bold 42px monospace';
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillText('ANTONINO', TABLE_WIDTH / 2, TABLE_HEIGHT / 2 - 12);
+    ctx.font = 'bold 28px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('⚡ POWER MOVE! ⚡', TABLE_WIDTH / 2, TABLE_HEIGHT / 2 + 24);
+    ctx.shadowBlur = 0;
   }
 
   // Pause overlay

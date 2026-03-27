@@ -231,23 +231,69 @@ body {
   margin-bottom: 10px;
 }
 
-.final-score {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 3rem;
-  font-weight: bold;
-  font-family: monospace;
+/* Stats card */
+.stats-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 20px 32px;
+  min-width: 320px;
 }
 
-.score-host {
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.stats-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #777;
+}
+
+.stats-team-red {
+  font-weight: bold;
+  color: #e04040;
+  font-size: 1rem;
+}
+
+.stats-team-blue {
+  font-weight: bold;
+  color: #4080e0;
+  font-size: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.stat-label {
+  color: #999;
+  font-size: 0.9rem;
+  text-align: center;
+  flex: 1;
+}
+
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: bold;
+  font-family: monospace;
+  width: 50px;
+  text-align: center;
+}
+
+.stat-red {
   color: #e04040;
 }
 
-.score-guest {
+.stat-blue {
   color: #4080e0;
-}
-
-.score-divider {
-  color: #666;
 }

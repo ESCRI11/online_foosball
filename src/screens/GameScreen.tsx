@@ -62,7 +62,19 @@ export function GameScreen({ role, send, onMessage, onGameOver, isLocal }: Props
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const pauseResumeStatus = useRef<string>('playing');
   const prevStatusRef = useRef<string>('countdown');
+  const headshotAudio = useRef<HTMLAudioElement | null>(null);
+  const crazyMoveAudio = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL;
+    headshotAudio.current = new Audio(`${base}sounds/headshot.mp3`);
+    headshotAudio.current.volume = 0.7;
+    crazyMoveAudio.current = new Audio(`${base}sounds/crazymove.mp3`);
+    crazyMoveAudio.current.volume = 0.5;
+    crazyMoveAudio.current.loop = true;
+  }, []);
 
   const gameLoop = useCallback((dt: number) => {
     const canvas = canvasRef.current;
@@ -74,9 +86,9 @@ export function GameScreen({ role, send, onMessage, onGameOver, isLocal }: Props
     if (consumePauseToggle()) {
       const s = stateRef.current;
       if (s.status === 'paused') {
-        stateRef.current = { ...s, status: prevStatusRef.current as GameState['status'] };
+        stateRef.current = { ...s, status: pauseResumeStatus.current as GameState['status'] };
       } else if (s.status === 'playing') {
-        prevStatusRef.current = s.status;
+        pauseResumeStatus.current = s.status;
         stateRef.current = { ...s, status: 'paused' };
       }
     }
@@ -96,6 +108,36 @@ export function GameScreen({ role, send, onMessage, onGameOver, isLocal }: Props
     } else {
       send({ type: 'input', data: localInput });
     }
+
+    // Power move audio
+    const cur = stateRef.current;
+    const prev = prevStatusRef.current;
+
+    // HEADSHOT on banner start
+    if (cur.status === 'powermove' && prev !== 'powermove') {
+      if (headshotAudio.current) {
+        headshotAudio.current.currentTime = 0;
+        headshotAudio.current.play().catch(() => {});
+      }
+    }
+
+    // Start crazy move loop when active phase begins
+    if (cur.powerMoveActiveTimer > 0 && cur.status === 'playing' && prev === 'powermove') {
+      if (crazyMoveAudio.current) {
+        crazyMoveAudio.current.currentTime = 0;
+        crazyMoveAudio.current.play().catch(() => {});
+      }
+    }
+
+    // Stop crazy move sound when active phase ends or goal scored
+    if (cur.powerMoveActiveTimer <= 0 || cur.status === 'goal' || cur.status === 'finished') {
+      if (crazyMoveAudio.current && !crazyMoveAudio.current.paused) {
+        crazyMoveAudio.current.pause();
+        crazyMoveAudio.current.currentTime = 0;
+      }
+    }
+
+    prevStatusRef.current = cur.status;
 
     render(ctx, stateRef.current, canvas.width, canvas.height);
 

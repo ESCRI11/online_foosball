@@ -42,8 +42,12 @@ export const ROD_CONFIGS: RodConfig[] = [
   { x: 745, playerCount: 1, side: 'host',  group: 'defense' },  // Red Goalkeeper
 ];
 
+// Power move
+export const POWER_MOVE_SPEED = 3500;
+export const POWER_MOVES_PER_TEAM = 2;
+
 // Scoring
-export const WIN_SCORE = 10;
+export const WIN_SCORE = 5;
 export const GOAL_PAUSE_DURATION = 2; // seconds to pause after a goal
 
 // Network

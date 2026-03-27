@@ -4,7 +4,7 @@ import {
   BALL_RADIUS, BALL_MAX_SPEED, BALL_FRICTION, BALL_INITIAL_SPEED,
   ROD_SLIDE_RANGE, ROD_SLIDE_SPEED, SHOOT_IMPULSE,
   PLAYER_WIDTH, PLAYER_HEIGHT, MIN_PLAYER_SPACING, ROD_CONFIGS,
-  WIN_SCORE, GOAL_PAUSE_DURATION,
+  WIN_SCORE, GOAL_PAUSE_DURATION, POWER_MOVE_SPEED, POWER_MOVES_PER_TEAM,
 } from './constants';
 
 export function createInitialState(): GameState {
@@ -29,6 +29,11 @@ export function createInitialState(): GameState {
     goalPauseTimer: 0,
     countdownTimer: 3,
     lastScorer: null,
+    powerMoveBannerTimer: 0,
+    powerMoveActiveTimer: 0,
+    powerMovesLeft: [POWER_MOVES_PER_TEAM, POWER_MOVES_PER_TEAM],
+    powerMovesUsed: [0, 0],
+    powerMoveGoals: [0, 0],
   };
 }
 
@@ -112,6 +117,23 @@ export function stepPhysics(
     return newState;
   }
 
+  // Handle power move banner freeze
+  if (newState.status === 'powermove') {
+    newState.powerMoveBannerTimer -= dt;
+    if (newState.powerMoveBannerTimer <= 0) {
+      newState.status = 'playing';
+      newState.powerMoveBannerTimer = 0;
+      newState.powerMoveActiveTimer = 3;
+      const speed = Math.sqrt(newState.ball.vx ** 2 + newState.ball.vy ** 2);
+      if (speed > 0) {
+        const scale = POWER_MOVE_SPEED / speed;
+        newState.ball.vx *= scale;
+        newState.ball.vy *= scale;
+      }
+    }
+    return newState;
+  }
+
   if (newState.status === 'finished' || newState.status === 'paused') return newState;
 
   // Apply inputs to rods — each player controls two groups independently
@@ -127,13 +149,19 @@ export function stepPhysics(
 
   const ball = newState.ball;
 
+  if (newState.powerMoveActiveTimer > 0) {
+    newState.powerMoveActiveTimer -= dt;
+    if (newState.powerMoveActiveTimer < 0) newState.powerMoveActiveTimer = 0;
+  }
+
   // Ball movement
   ball.x += ball.vx * dt;
   ball.y += ball.vy * dt;
 
-  // Friction
-  ball.vx *= BALL_FRICTION;
-  ball.vy *= BALL_FRICTION;
+  // Friction (reduced during power move for sustained speed)
+  const friction = newState.powerMoveActiveTimer > 0 ? 1.0 : BALL_FRICTION;
+  ball.vx *= friction;
+  ball.vy *= friction;
 
   // Wall collisions (top/bottom)
   if (ball.y - BALL_RADIUS < BORDER_WIDTH) {
@@ -152,11 +180,12 @@ export function stepPhysics(
 
   if (ball.x - BALL_RADIUS < BORDER_WIDTH) {
     if (ball.y > goalTop && ball.y < goalBottom) {
-      // Ball entered left goal -> Red (host) scores
       newState.score[0]++;
+      if (newState.powerMoveActiveTimer > 0) newState.powerMoveGoals[0]++;
       newState.status = 'goal';
       newState.goalPauseTimer = GOAL_PAUSE_DURATION;
       newState.lastScorer = 'host';
+      newState.powerMoveActiveTimer = 0;
       return newState;
     } else {
       ball.x = BORDER_WIDTH + BALL_RADIUS;
@@ -166,11 +195,12 @@ export function stepPhysics(
 
   if (ball.x + BALL_RADIUS > TABLE_WIDTH - BORDER_WIDTH) {
     if (ball.y > goalTop && ball.y < goalBottom) {
-      // Ball entered right goal -> Blue (guest) scores
       newState.score[1]++;
+      if (newState.powerMoveActiveTimer > 0) newState.powerMoveGoals[1]++;
       newState.status = 'goal';
       newState.goalPauseTimer = GOAL_PAUSE_DURATION;
       newState.lastScorer = 'guest';
+      newState.powerMoveActiveTimer = 0;
       return newState;
     } else {
       ball.x = TABLE_WIDTH - BORDER_WIDTH - BALL_RADIUS;
@@ -178,34 +208,51 @@ export function stepPhysics(
     }
   }
 
-  // Rod/player collisions - angle depends on where the ball hits the figure
-  for (const rod of newState.rods) {
-    const playerYs = getPlayerPositions(rod);
-    for (const py of playerYs) {
-      if (checkPlayerCollision(ball, rod.x, py)) {
-        const shootDir = rod.side === 'host' ? -1 : 1;
+  // Rod/player collisions (skipped while power move ball is active)
+  if (newState.powerMoveActiveTimer <= 0) {
+    for (const rod of newState.rods) {
+      const input = rod.side === 'host' ? hostInput : guestInput;
+      const playerYs = getPlayerPositions(rod);
+      for (const py of playerYs) {
+        if (checkPlayerCollision(ball, rod.x, py)) {
+          const shootDir = rod.side === 'host' ? -1 : 1;
 
-        // Where did the ball hit? Normalized offset from player center: -1 (top edge) to +1 (bottom edge)
-        const hitZone = PLAYER_HEIGHT / 2 + BALL_RADIUS;
-        const hitOffset = Math.max(-1, Math.min(1, (ball.y - py) / hitZone));
+          const hitZone = PLAYER_HEIGHT / 2 + BALL_RADIUS;
+          const hitOffset = Math.max(-1, Math.min(1, (ball.y - py) / hitZone));
 
-        ball.x = rod.x + shootDir * (PLAYER_WIDTH / 2 + BALL_RADIUS + 1);
+          // Easter egg: space held + defense rod = POWER MOVE (limited uses)
+          const sideIdx = rod.side === 'host' ? 0 : 1;
+          if (rod.group === 'defense' && input.powerMove && newState.powerMovesLeft[sideIdx] > 0) {
+            newState.powerMovesLeft[sideIdx]--;
+            newState.powerMovesUsed[sideIdx]++;
+            ball.x = rod.x + shootDir * (PLAYER_WIDTH / 2 + BALL_RADIUS + 1);
+            const edgeFactor = Math.abs(hitOffset);
+            ball.vx = shootDir * SHOOT_IMPULSE * (1 - 0.35 * edgeFactor);
+            ball.vy = hitOffset * SHOOT_IMPULSE * 0.9;
+            newState.status = 'powermove';
+            newState.powerMoveBannerTimer = 1.2;
+            return newState;
+          }
 
-        // Edge hits trade forward speed for steep lateral deflection
-        const edgeFactor = Math.abs(hitOffset);
-        const forwardSpeed = SHOOT_IMPULSE * (1 - 0.35 * edgeFactor);
-        const lateralSpeed = hitOffset * SHOOT_IMPULSE * 0.9;
+          ball.x = rod.x + shootDir * (PLAYER_WIDTH / 2 + BALL_RADIUS + 1);
 
-        ball.vx = shootDir * forwardSpeed;
-        ball.vy = lateralSpeed;
+          const edgeFactor = Math.abs(hitOffset);
+          const forwardSpeed = SHOOT_IMPULSE * (1 - 0.35 * edgeFactor);
+          const lateralSpeed = hitOffset * SHOOT_IMPULSE * 0.9;
 
-        [ball.vx, ball.vy] = clampSpeed(ball.vx, ball.vy);
-        break;
+          ball.vx = shootDir * forwardSpeed;
+          ball.vy = lateralSpeed;
+
+          [ball.vx, ball.vy] = clampSpeed(ball.vx, ball.vy);
+          break;
+        }
       }
     }
   }
 
-  [ball.vx, ball.vy] = clampSpeed(ball.vx, ball.vy);
+  if (newState.powerMoveActiveTimer <= 0) {
+    [ball.vx, ball.vy] = clampSpeed(ball.vx, ball.vy);
+  }
 
   return newState;
 }

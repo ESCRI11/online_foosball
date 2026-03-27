@@ -41,9 +41,10 @@ export function getInput(): PlayerInput {
     defDown: keys.has('s') || keys.has('arrowdown'),
     atkUp:   keys.has('a') || keys.has('arrowleft'),
     atkDown: keys.has('d') || keys.has('arrowright'),
+    powerMove: keys.has(' '),
   };
 }
 
 export const EMPTY_INPUT: PlayerInput = {
-  defUp: false, defDown: false, atkUp: false, atkDown: false,
+  defUp: false, defDown: false, atkUp: false, atkDown: false, powerMove: false,
 };
