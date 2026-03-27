@@ -271,11 +271,13 @@ export function render(
   const redPm = state.powerMovesLeft[0];
   ctx.fillText(`${'●'.repeat(redPm)}${'○'.repeat(2 - redPm)}⚡`, TABLE_WIDTH - BORDER_WIDTH - 4, pmY);
 
-  // Pause hint (always visible)
+  // Hints (always visible)
   ctx.font = '10px monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.textAlign = 'right';
   ctx.fillText('P = Pause', TABLE_WIDTH - BORDER_WIDTH - 4, BORDER_WIDTH + 12);
+  ctx.textAlign = 'left';
+  ctx.fillText('SPACE + Defender = ⚡ Power Move', BORDER_WIDTH + 4, BORDER_WIDTH + 12);
 
   // Goal flash
   if (state.status === 'goal' && state.goalPauseTimer > 1.5) {

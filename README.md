@@ -4,10 +4,12 @@ A browser-based foosball game built with React, TypeScript, and Vite. Play local
 
 ## Controls
 
-| Keys | Rods |
+| Keys | Action |
 |---|---|
-| W / S (or Arrow Up / Down) | Goalkeeper + Defense |
-| A / D (or Arrow Left / Right) | Midfield + Attack |
+| W / S (or Arrow Up / Down) | Move Goalkeeper + Defense |
+| A / D (or Arrow Left / Right) | Move Midfield + Attack |
+| Space (while defender hits ball) | ⚡ Power Move (2 per team per match) |
+| P | Pause / Resume |
 
 ## Development
 
