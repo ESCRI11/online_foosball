@@ -248,6 +248,12 @@ export function render(
   ctx.fillText('-', scoreX, scoreY);
   ctx.fillText(`${state.score[1]}`, scoreX + 30, scoreY);
 
+  // Pause hint (always visible)
+  ctx.font = '10px monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'right';
+  ctx.fillText('P = Pause', TABLE_WIDTH - BORDER_WIDTH - 4, BORDER_WIDTH + 12);
+
   // Goal flash
   if (state.status === 'goal' && state.goalPauseTimer > 1.5) {
     ctx.fillStyle = `rgba(255,255,255,${(state.goalPauseTimer - 1.5) * 2})`;
