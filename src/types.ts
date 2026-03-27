@@ -21,7 +21,7 @@ export interface GameState {
   ball: Ball;
   rods: Rod[];
   score: [number, number]; // [host, guest]
-  status: 'playing' | 'goal' | 'countdown' | 'finished';
+  status: 'playing' | 'goal' | 'countdown' | 'finished' | 'paused';
   goalPauseTimer: number;
   countdownTimer: number;
   lastScorer: 'host' | 'guest' | null;

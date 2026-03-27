@@ -112,7 +112,7 @@ export function stepPhysics(
     return newState;
   }
 
-  if (newState.status === 'finished') return newState;
+  if (newState.status === 'finished' || newState.status === 'paused') return newState;
 
   // Apply inputs to rods — each player controls two groups independently
   for (const rod of newState.rods) {

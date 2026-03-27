@@ -1,6 +1,7 @@
 import type { PlayerInput } from '../types';
 
 const keys = new Set<string>();
+let pausePressed = false;
 
 const PREVENT_DEFAULT = new Set([
   'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ',
@@ -9,6 +10,7 @@ const PREVENT_DEFAULT = new Set([
 export function initInput() {
   window.addEventListener('keydown', (e) => {
     keys.add(e.key.toLowerCase());
+    if (e.key.toLowerCase() === 'p') pausePressed = true;
     if (PREVENT_DEFAULT.has(e.key.toLowerCase())) {
       e.preventDefault();
     }
@@ -21,6 +23,14 @@ export function initInput() {
   window.addEventListener('blur', () => {
     keys.clear();
   });
+}
+
+export function consumePauseToggle(): boolean {
+  if (pausePressed) {
+    pausePressed = false;
+    return true;
+  }
+  return false;
 }
 
 // W/S (or ArrowUp/Down) = GK + Defense rods

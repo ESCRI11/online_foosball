@@ -3,7 +3,7 @@ import type { GameState, PlayerInput, Message, Role } from '../types';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { render } from '../game/renderer';
 import { stepPhysics, createInitialState } from '../game/physics';
-import { getInput, initInput, EMPTY_INPUT } from '../game/input';
+import { getInput, initInput, EMPTY_INPUT, consumePauseToggle } from '../game/input';
 import { STATE_SEND_RATE } from '../game/constants';
 
 interface Props {
@@ -62,33 +62,41 @@ export function GameScreen({ role, send, onMessage, onGameOver, isLocal }: Props
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const prevStatusRef = useRef<string>('countdown');
+
   const gameLoop = useCallback((dt: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Pause toggle (P key)
+    if (consumePauseToggle()) {
+      const s = stateRef.current;
+      if (s.status === 'paused') {
+        stateRef.current = { ...s, status: prevStatusRef.current as GameState['status'] };
+      } else if (s.status === 'playing') {
+        prevStatusRef.current = s.status;
+        stateRef.current = { ...s, status: 'paused' };
+      }
+    }
+
     const localInput = getInput();
 
     if (isLocal) {
-      // Local play: player controls both sides (host with WASD, guest also with WASD for testing)
       stateRef.current = stepPhysics(stateRef.current, dt, localInput, localInput);
     } else if (role === 'host') {
-      // Host: run physics with both inputs
       stateRef.current = stepPhysics(stateRef.current, dt, localInput, guestInputRef.current);
 
-      // Send state to guest at reduced rate
       const now = performance.now();
       if (now - lastSendTime.current > 1000 / STATE_SEND_RATE) {
         send({ type: 'state', data: stateRef.current });
         lastSendTime.current = now;
       }
     } else {
-      // Guest: send input to host, render received state
       send({ type: 'input', data: localInput });
     }
 
-    // Render
     render(ctx, stateRef.current, canvas.width, canvas.height);
 
     // Check game over

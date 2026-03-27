@@ -4,8 +4,10 @@ import {
   BALL_RADIUS, PLAYER_WIDTH, PLAYER_HEIGHT, MIN_PLAYER_SPACING,
 } from './constants';
 
-const FIELD_COLOR = '#2d8a4e';
+const FIELD_COLOR_LIGHT = '#2f8e50';
+const FIELD_COLOR_DARK = '#2a7e46';
 const FIELD_LINES = '#3da564';
+const GRASS_STRIP_COUNT = 12;
 const BORDER_COLOR = '#5c3a1e';
 const BORDER_HIGHLIGHT = '#7a5230';
 const HOST_ROD_COLOR = '#cc3333';
@@ -52,9 +54,16 @@ export function render(
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
 
-  // Field
-  ctx.fillStyle = FIELD_COLOR;
-  ctx.fillRect(BORDER_WIDTH, BORDER_WIDTH, TABLE_WIDTH - BORDER_WIDTH * 2, TABLE_HEIGHT - BORDER_WIDTH * 2);
+  // Field with alternating grass strips
+  const fieldLeft = BORDER_WIDTH;
+  const fieldTop = BORDER_WIDTH;
+  const fieldW = TABLE_WIDTH - BORDER_WIDTH * 2;
+  const fieldH = TABLE_HEIGHT - BORDER_WIDTH * 2;
+  const stripW = fieldW / GRASS_STRIP_COUNT;
+  for (let i = 0; i < GRASS_STRIP_COUNT; i++) {
+    ctx.fillStyle = i % 2 === 0 ? FIELD_COLOR_LIGHT : FIELD_COLOR_DARK;
+    ctx.fillRect(fieldLeft + stripW * i, fieldTop, stripW, fieldH);
+  }
 
   // Field markings
   ctx.strokeStyle = FIELD_LINES;
@@ -76,6 +85,41 @@ export function render(
   ctx.beginPath();
   ctx.arc(TABLE_WIDTH / 2, TABLE_HEIGHT / 2, 4, 0, Math.PI * 2);
   ctx.fill();
+
+  // Penalty area and goal area box markings
+  const midY = TABLE_HEIGHT / 2;
+  const penaltyBoxW = 120;
+  const penaltyBoxH = 260;
+  const goalBoxW = 50;
+  const goalBoxH = 160;
+
+  // Left penalty area
+  ctx.strokeRect(fieldLeft, midY - penaltyBoxH / 2, penaltyBoxW, penaltyBoxH);
+  // Left goal area (small box)
+  ctx.strokeRect(fieldLeft, midY - goalBoxH / 2, goalBoxW, goalBoxH);
+  // Left penalty spot
+  ctx.fillStyle = FIELD_LINES;
+  ctx.beginPath();
+  ctx.arc(fieldLeft + penaltyBoxW - 20, midY, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Left penalty arc
+  ctx.beginPath();
+  ctx.arc(fieldLeft + penaltyBoxW - 20, midY, 40, -0.7, 0.7);
+  ctx.stroke();
+
+  // Right penalty area
+  ctx.strokeRect(fieldLeft + fieldW - penaltyBoxW, midY - penaltyBoxH / 2, penaltyBoxW, penaltyBoxH);
+  // Right goal area (small box)
+  ctx.strokeRect(fieldLeft + fieldW - goalBoxW, midY - goalBoxH / 2, goalBoxW, goalBoxH);
+  // Right penalty spot
+  ctx.fillStyle = FIELD_LINES;
+  ctx.beginPath();
+  ctx.arc(fieldLeft + fieldW - penaltyBoxW + 20, midY, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Right penalty arc
+  ctx.beginPath();
+  ctx.arc(fieldLeft + fieldW - penaltyBoxW + 20, midY, 40, Math.PI - 0.7, Math.PI + 0.7);
+  ctx.stroke();
 
   // Goal areas
   const goalTop = (TABLE_HEIGHT - GOAL_WIDTH) / 2;
@@ -179,20 +223,30 @@ export function render(
   ctx.fill();
 
   // Score display
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(TABLE_WIDTH / 2 - 70, 0, 140, 24);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 16px monospace';
+  const scoreW = 200;
+  const scoreH = 28;
+  const scoreX = TABLE_WIDTH / 2;
+  const scoreY = scoreH / 2;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(scoreX - scoreW / 2, 0, scoreW, scoreH);
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`${state.score[0]}  -  ${state.score[1]}`, TABLE_WIDTH / 2, 13);
 
-  // Side labels
-  ctx.font = '11px monospace';
+  // Team labels
+  ctx.font = 'bold 11px monospace';
   ctx.fillStyle = HOST_ROD_COLOR;
-  ctx.fillText('RED', TABLE_WIDTH / 2 - 40, 13);
+  ctx.fillText('RED', scoreX - 70, scoreY);
   ctx.fillStyle = GUEST_ROD_COLOR;
-  ctx.fillText('BLUE', TABLE_WIDTH / 2 + 40, 13);
+  ctx.fillText('BLUE', scoreX + 70, scoreY);
+
+  // Score numbers
+  ctx.font = 'bold 18px monospace';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`${state.score[0]}`, scoreX - 30, scoreY);
+  ctx.fillText('-', scoreX, scoreY);
+  ctx.fillText(`${state.score[1]}`, scoreX + 30, scoreY);
 
   // Goal flash
   if (state.status === 'goal' && state.goalPauseTimer > 1.5) {
@@ -222,6 +276,20 @@ export function render(
     ctx.textBaseline = 'middle';
     const num = Math.ceil(state.countdownTimer);
     ctx.fillText(num > 0 ? String(num) : 'GO!', TABLE_WIDTH / 2, TABLE_HEIGHT / 2);
+  }
+
+  // Pause overlay
+  if (state.status === 'paused') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(BORDER_WIDTH, BORDER_WIDTH, TABLE_WIDTH - BORDER_WIDTH * 2, TABLE_HEIGHT - BORDER_WIDTH * 2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 48px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PAUSED', TABLE_WIDTH / 2, TABLE_HEIGHT / 2);
+    ctx.font = '16px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('Press P to resume', TABLE_WIDTH / 2, TABLE_HEIGHT / 2 + 40);
   }
 
   ctx.restore();
