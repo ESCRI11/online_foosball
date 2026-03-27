@@ -47,8 +47,10 @@ export function LandingScreen({ onCreateGame, onJoinGame, initialJoinId }: Props
 
       <div className="controls-info">
         <h3>Controls</h3>
-        <p><strong>A / D</strong> or <strong>Left / Right Arrow</strong> — Slide rods</p>
-        <p>Players auto-shoot the ball forward on contact</p>
+        <p><strong>W / S</strong> or <strong>↑ / ↓</strong> — Goalkeeper + Defense</p>
+        <p><strong>A / D</strong> or <strong>← / →</strong> — Midfield + Attack</p>
+        <p><strong>Space</strong> + Defender hit — ⚡ Power Move (2 per match)</p>
+        <p><strong>P</strong> — Pause</p>
       </div>
     </div>
   );
