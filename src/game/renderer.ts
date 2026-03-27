@@ -1,7 +1,7 @@
 import type { GameState, Rod } from '../types';
 import {
   TABLE_WIDTH, TABLE_HEIGHT, BORDER_WIDTH, GOAL_WIDTH,
-  BALL_RADIUS, PLAYER_WIDTH, PLAYER_HEIGHT,
+  BALL_RADIUS, PLAYER_WIDTH, PLAYER_HEIGHT, MIN_PLAYER_SPACING,
 } from './constants';
 
 const FIELD_COLOR = '#2d8a4e';
@@ -17,11 +17,15 @@ const BALL_SHADOW = 'rgba(0,0,0,0.3)';
 const GOAL_AREA_COLOR = 'rgba(0,0,0,0.25)';
 
 function getPlayerPositions(rod: Rod): number[] {
-  const positions: number[] = [];
   const playArea = TABLE_HEIGHT - BORDER_WIDTH * 2;
-  const spacing = playArea / (rod.playerCount + 1);
+  const naturalSpacing = playArea / (rod.playerCount + 1);
+  const spacing = Math.max(naturalSpacing, MIN_PLAYER_SPACING);
+  const totalSpan = spacing * (rod.playerCount - 1);
+  const startY = TABLE_HEIGHT / 2 - totalSpan / 2 + rod.y;
+
+  const positions: number[] = [];
   for (let i = 0; i < rod.playerCount; i++) {
-    positions.push(BORDER_WIDTH + spacing * (i + 1) + rod.y);
+    positions.push(startY + spacing * i);
   }
   return positions;
 }

@@ -16,6 +16,7 @@ export const ROD_SLIDE_SPEED = 400; // pixels per second
 export const SHOOT_IMPULSE = 400; // velocity added to ball when touching a player
 export const PLAYER_WIDTH = 10;
 export const PLAYER_HEIGHT = 30;
+export const MIN_PLAYER_SPACING = 88;
 
 // Rod layout: x position (from left), player count, side
 // Left side = host, Right side = guest

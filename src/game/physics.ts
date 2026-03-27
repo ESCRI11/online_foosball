@@ -3,7 +3,7 @@ import {
   TABLE_WIDTH, TABLE_HEIGHT, BORDER_WIDTH, GOAL_WIDTH,
   BALL_RADIUS, BALL_MAX_SPEED, BALL_FRICTION, BALL_INITIAL_SPEED,
   ROD_SLIDE_RANGE, ROD_SLIDE_SPEED, SHOOT_IMPULSE,
-  PLAYER_WIDTH, PLAYER_HEIGHT, ROD_CONFIGS,
+  PLAYER_WIDTH, PLAYER_HEIGHT, MIN_PLAYER_SPACING, ROD_CONFIGS,
   WIN_SCORE, GOAL_PAUSE_DURATION,
 } from './constants';
 
@@ -50,12 +50,16 @@ function clampSpeed(vx: number, vy: number): [number, number] {
   return [vx, vy];
 }
 
-// Get Y positions of player figures on a rod
 function getPlayerPositions(rod: Rod): number[] {
+  const playArea = TABLE_HEIGHT - BORDER_WIDTH * 2;
+  const naturalSpacing = playArea / (rod.playerCount + 1);
+  const spacing = Math.max(naturalSpacing, MIN_PLAYER_SPACING);
+  const totalSpan = spacing * (rod.playerCount - 1);
+  const startY = TABLE_HEIGHT / 2 - totalSpan / 2 + rod.y;
+
   const positions: number[] = [];
-  const spacing = (TABLE_HEIGHT - BORDER_WIDTH * 2) / (rod.playerCount + 1);
   for (let i = 0; i < rod.playerCount; i++) {
-    positions.push(BORDER_WIDTH + spacing * (i + 1) + rod.y);
+    positions.push(startY + spacing * i);
   }
   return positions;
 }
