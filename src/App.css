@@ -44,7 +44,81 @@ body {
 .subtitle {
   color: #888;
   font-size: 1.1rem;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+}
+
+/* Landing */
+.landing {
+  gap: 20px;
+}
+
+.landing-ball {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 6px 20px rgba(0,0,0,0.4));
+}
+
+.landing-title h1 {
+  font-size: 2.8rem;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #fff 30%, #3da564);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 340px;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #888;
+}
+
+.control-item span {
+  margin-left: 2px;
+}
+
+.control-alt {
+  color: #555;
+  font-size: 0.78rem;
+  margin-left: 0;
+}
+
+kbd {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.landing-footer {
+  color: #555;
+  font-size: 0.8rem;
+  margin-top: 4px;
 }
 
 /* Buttons */
@@ -61,6 +135,13 @@ body {
 .btn.primary {
   background: #2d8a4e;
   color: #fff;
+}
+
+.btn.large {
+  padding: 14px 0;
+  font-size: 1.05rem;
+  width: 100%;
+  border-radius: 10px;
 }
 
 .btn.primary:hover {
@@ -141,7 +222,7 @@ body {
   border-color: #2d8a4e;
 }
 
-/* Controls info */
+/* Controls info (legacy, kept for lobby screen) */
 .controls-info {
   margin-top: 40px;
   padding: 20px;
